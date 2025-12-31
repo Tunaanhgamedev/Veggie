@@ -86,6 +86,7 @@
                         <div class="header-search-1-form">
                             <form id="#" method="GET" action="{{ route('search') }}">
                                 <input type="text" name="keyword" value="" placeholder="Tìm kiếm ở đây..." />
+                                <i class="fa fa-microphone" aria-hidden="true" id="voice-search"></i>
                                 <button type="submit">
                                     <span><i class="icon-search"></i></span>
                                 </button>

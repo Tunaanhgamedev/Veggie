@@ -276,8 +276,8 @@
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="#" title="Thêm vào giỏ" data-bs-toggle="modal"
-                                                            data-bs-target="#add_to_cart_modal-{{ $pro->id }}">
+                                                        <a href="#" title="Thêm vào giỏ" class="add-to-cart-btn"
+                                                            data-id="{{ $pro->id }}">
                                                             <i class="fas fa-shopping-cart"></i>
                                                         </a>
                                                     </li>
@@ -302,7 +302,8 @@
                                                 </ul>
                                             </div>
                                             <h2 class="product-title"><a
-                                                    href="product-details.html">{{ $pro->name }}</a></h2>
+                                                    href="{{ route('products.detail', $pro->id) }}">{{ $pro->name }}</a>
+                                            </h2>
                                             <div class="product-price">
                                                 <span>{{ number_format($pro->price, 0, ',', '.') }} VNĐ</span>
                                             </div>
@@ -381,7 +382,8 @@
             <div class="col-lg-3 col-md-4 col-sm-6 col-6">
                 <div class="ltn__product-item ltn__product-item-3 text-left">
                     <div class="product-img">
-                        <a href="#"><img src="{{ $product->image_url }}" alt="{{ $product->name }}"></a>
+                        <a href="{{ route('product.detail', ['id' => $product->id]) }}"><img
+                                src="{{ $product->image_url }}" alt="{{ $product->name }}"></a>
                         <div class="product-badge">
                             <ul>
                                 <li class="sale-badge">-19%</li>
@@ -396,8 +398,8 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" title="Thêm vào giỏ" data-bs-toggle="modal"
-                                        data-bs-target="#add_to_cart_modal-{{ $product->id }}">
+                                    <a href="javascript:void(0)" title="Thêm vào giỏ" class="add-to-cart-btn"
+                                        data-id="{{ $product->id }}">
                                         <i class="fas fa-shopping-cart"></i>
                                     </a>
                                 </li>
@@ -421,7 +423,9 @@
                                 <li class="review-total"> <a href="#"> (24)</a></li>
                             </ul>
                         </div>
-                        <h2 class="product-title"><a href="product-details.html">{{ $product->name }}</a></h2>
+                        <h2 class="product-title"><a
+                                href="{{ route('product.detail', ['id' => $product->id]) }}">{{ $product->name }}</a>
+                        </h2>
                         <div class="product-price">
                             <span>{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
                         </div>

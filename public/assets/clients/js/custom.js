@@ -344,30 +344,62 @@ $(document).ready(function () {
      *************************************/
 
     $(document).on("click", ".qtybutton", function () {
-        var $button = $(this);
-        var $input = $button.siblings("input");
-        var oldValue = parseInt($input.val());
-        var maxStock = parseInt($input.data("max"));
+        let $button = $(this);
+        let $input = $button.siblings("input");
+        let productId = $input.data("id");
+        let oldValue = parseInt($input.val());
+        let maxStock = parseInt($input.data("max"));
+        let newValue = oldValue;
 
+        // 1. Cập nhật con số hiển thị (Dùng chung cho cả 2 trang)
         if ($button.hasClass("inc")) {
-            if (oldValue < maxStock) $input.val(oldValue + 1);
+            if (oldValue < maxStock) {
+                newValue = oldValue + 1;
+            } else {
+                toastr.warning("Đã đạt giới hạn tồn kho.");
+                return;
+            }
+        } else if ($button.hasClass("dec")) {
+            if (oldValue > 1) {
+                newValue = oldValue - 1;
+            }
+        }
+
+        $input.val(newValue); // Đưa số mới vào ô input
+
+        // 2. ĐIỀU KIỆN QUAN TRỌNG: Chỉ gọi Ajax nếu đang ở trang Giỏ hàng
+        // Kiểm tra nếu trên trang có bảng giỏ hàng (class .shoping-cart-inner)
+        if ($(".shoping-cart-inner").length > 0) {
+            if (typeof updateCart === "function") {
+                updateCart(productId, newValue, $input);
+            }
         } else {
-            // Don't allow decrementing below zero
-            if (oldValue > 1) $input.val(oldValue - 1);
+            // Ở trang Chi tiết sản phẩm: Không làm gì cả,
+            // để người dùng bấm nút "THÊM VÀO GIỎ HÀNG" sau.
+            console.log("Đã chọn số lượng: " + newValue);
         }
     });
 
     $(document).on("click", ".add-to-cart-btn", function (e) {
         e.preventDefault();
-        let productId = $(this).data("id");
-        let quantity = $(this)
-            .closest("li")
-            .prev()
-            .find(".cart-plus-minus-box")
-            .val();
 
-        quantity = quantity ? quantity : 1;
+        // Ép tìm lên thẻ cha gần nhất có class .add-to-cart-btn
+        var target = $(e.target).closest(".add-to-cart-btn");
+        var productId = target.attr("data-id") || target.data("id");
 
+        // Tìm ô input số lượng nằm trong cùng khu vực với nút bấm
+        var quantityInput = $(".cart-plus-minus-box");
+        var quantity = 1;
+
+        // Nếu tìm thấy ô input số lượng (thường ở trang Chi tiết), lấy giá trị của nó
+        if (quantityInput.length > 0) {
+            quantity = parseInt(quantityInput.val());
+        }
+
+        if (!productId || productId === "undefined") {
+            alert("Lỗi chưa có id sản phẩm.");
+            return;
+        }
         $.ajaxSetup({
             headers: {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
@@ -382,19 +414,23 @@ $(document).ready(function () {
                 quantity: quantity,
             },
             success: function (response) {
-                $("#add_to_cart_modal-" + productId).modal("show");
-                $("#quick_view_modal-" + productId).modal("hide");
-                toastr.success("Đã thêm sản phẩm vào giỏ hàng.");
+                // Hiện Modal thành công
+                var modalId = "#add_to_cart_modal-" + productId;
+                if ($(modalId).length) {
+                    $(modalId).modal("show");
+                }
+                // Cập nhật số lượng trên icon giỏ hàng header
                 $("#cart-count").text(response.cartCount);
+                toastr.success("Đã thêm vào giỏ hàng!");
             },
             error: function (xhr) {
-                alert("Đã có lỗi xảy ra khi thêm vào giỏ hàng.");
+                alert("Lỗi server: " + xhr.status);
             },
         });
     });
 
     /*************************************
-     *  CART
+     *  MINI CART
      *************************************/
     //Mini cart
     $(".mini-cart-icon").click(function (e) {
@@ -448,4 +484,213 @@ $(document).ready(function () {
             },
         });
     });
+
+    /*************************************
+     *  PAGES CART
+     *************************************/
+
+    function updateCart(productId, quantity, $inputField) {
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+        $.ajax({
+            url: "/cart/update", // Đường dẫn phải khớp với Route::post trong web.php
+            method: "POST",
+            data: {
+                product_id: productId,
+                quantity: quantity,
+            },
+            success: function (response) {
+                if (response.status === false) {
+                    toastr.error(response.message);
+                    // Nếu lỗi (vượt tồn kho), reload để reset lại số cũ
+                    setTimeout(() => location.reload(), 1000);
+                    return;
+                }
+
+                // --- CẬP NHẬT GIAO DIỆN TẠI ĐÂY ---
+
+                // 1. Cập nhật Thành tiền của dòng hiện tại
+                // Tìm đến thẻ <tr> chứa cái input đang bấm, rồi tìm class subtotal
+                $inputField
+                    .closest("tr")
+                    .find(".cart-product-subtotal")
+                    .text(response.subtotal + " đ");
+
+                // 2. Cập nhật Tổng tiền (Total cost) ở dưới bảng
+                $(".cart-total").text(response.total + " VNĐ");
+
+                // 3. Cập nhật Tổng đơn hàng (Total orders) đã cộng phí ship
+                $(".cart-grand-total").text(response.grandTotal + " VNĐ");
+
+                console.log("Cập nhật thành công!", response);
+            },
+            error: function (xhr) {
+                console.error("Lỗi Ajax:", xhr.responseText);
+                toastr.error("Không thể cập nhật giỏ hàng.");
+            },
+        });
+    }
+
+    $(".remove-from-cart").on("click", function (e) {
+        let productId = $(this).data("id");
+        let row = $(this).closest("tr");
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+        $.ajax({
+            url: "/cart/remove-cart",
+            type: "POST",
+            data: {
+                product_id: productId,
+            },
+            success: function (response) {
+                row.remove();
+
+                // Cập nhật lại tổng tiền sau khi xóa
+                $(".cart-total").text(response.total + " VNĐ");
+                $(".cart-grand-total").text(response.grandTotal + " VNĐ");
+                if ($(".cart-product-remove").length == 0) {
+                    location.reload();
+                }
+            },
+            error: function (xhr) {
+                toastr.error("Không thể cập nhật giỏ hàng.");
+            },
+        });
+    });
+
+    /*************************************
+     *  SEARCH VOICE INPUT
+     *************************************/
+    // Check browser support?
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+        var recognition = new (window.SpeechRecognition ||
+            window.webkitSpeechRecognition)();
+        recognition.lang = "vi-VN";
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        var isRecognizing = false;
+
+        $("#voice-search").on("click", function () {
+            if (isRecognizing) {
+                recognition.stop();
+                $(this)
+                    .removeClass("fa-microphone-slash")
+                    .addClass("fa-microphone");
+            } else {
+                recognition.start();
+                $(this)
+                    .removeClass("fa-microphone")
+                    .addClass("fa-microphone-slash");
+            }
+        });
+
+        recognition.onstart = function () {
+            console.log("Speech recognition started");
+            isRecognizing = true;
+            $("#voice-search")
+                .removeClass("fa-microphone")
+                .addClass("fa-microphone-slash");
+        };
+
+        recognition.onresult = function (event) {
+            var transcript = event.results[0][0].transcript;
+            if (event.results[0].isFinal) {
+                $("input[name='keyword']").val(transcript);
+            } else {
+                $("input[name='keyword']").val(transcript);
+            }
+        };
+
+        recognition.onerror = function (event) {
+            console.error("Speech recognition error", event.error);
+            toastr.error("Lỗi nhận dạng giọng nói: " + event.error);
+        };
+
+        recognition.onend = function (event) {
+            console.log("Speech recognition ended");
+            $(this)
+                .removeClass("fa-microphone-slash")
+                .addClass("fa-microphone");
+            isRecognizing = false;
+        };
+    } else {
+        alert("Trình duyệt không hỗ trợ Speech Recognition");
+        toastr.error("Trình duyệt không hỗ trợ nhận dạng giọng nói.");
+    }
+
+    $(document).ready(function() {
+    // 1. Mở/Đóng Chatbox
+    $('#open-chat-btn').click(() => $('#ai-chatbox').toggleClass('chatbox-open chatbox-closed'));
+    $('#close-chat').click(() => $('#ai-chatbox').addClass('chatbox-closed').removeClass('chatbox-open'));
+
+    // 2. Cấu hình Nhận diện giọng nói (Speech Recognition)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'vi-VN';
+        let isRecognizing = false;
+
+        $('#voice-btn').click(function() {
+            if (isRecognizing) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                $(this).find('i').removeClass('fa-microphone').addClass('fa-microphone-slash');
+            }
+        });
+
+        recognition.onstart = () => { isRecognizing = true; };
+        recognition.onend = () => { 
+            isRecognizing = false; 
+            $('#voice-btn').find('i').removeClass('fa-microphone-slash').addClass('fa-microphone');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            $('#user-input').val(transcript);
+            sendMessage(transcript);
+        };
+
+        recognition.onerror = (event) => {
+            toastr.error('Có lỗi xảy ra khi nhận diện giọng nói: ' + event.error);
+        };
+    } else {
+        $('#voice-btn').hide();
+        console.log("Trình duyệt không hỗ trợ nhận diện giọng nói.");
+    }
+
+    // 3. Hàm gửi tin nhắn
+    function sendMessage(text) {
+        if (!text.trim()) return;
+        
+        $('#chat-content').append(`<div class="message user-message">${text}</div>`);
+        $('#user-input').val('');
+
+        // Gửi Ajax lên server (Bạn cần tạo Route và Controller xử lý AI)
+        $.ajax({
+            url: '/ai/chat',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                message: text
+            },
+            success: function(response) {
+    // Thêm tin nhắn của AI vào khung chat
+    $('#chat-content').append('<div class="message ai-message">' + response.reply + '</div>');
+    // Tự động cuộn xuống dưới cùng
+    var chatContent = document.getElementById("chat-content");
+    chatContent.scrollTop = chatContent.scrollHeight;
+}
+        });
+    }
+
+    $('#send-btn').click(() => sendMessage($('#user-input').val()));
+});
 });

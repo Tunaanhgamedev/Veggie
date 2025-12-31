@@ -103,13 +103,96 @@ class CartController extends Controller
 
     public function viewCart()
     {
-        $cartItems = [];
+        
         if(Auth::check()){
-            
+            $cartItems = CartItem::where('user_id', Auth::id())->with('product')->get()->map(function($item) {
+                return [
+                    'product_id' => $item->product->id,
+                    'name' => $item->product->name,
+                    'price' => $item->product->price,
+                    'quantity' => $item->quantity,
+                    'stock' => $item->product->stock,
+                    'image' => $item->product->images->first()->image ?? 'uploads/products/default-product.png',
+                ];
+            })->toArray();
         } else {
             $cartItems = session()->get('cart', []);
         }
-
         return view('clients.pages.cart', compact('cartItems'));
+    }
+
+    function updateCart(Request $request)
+    {
+        $productId = $request->product_id;
+        $quantity = (int)$request->quantity;
+        if(Auth::check()){
+            $cartItems = CartItem::where('user_id', Auth::id())->where('product_id', $productId)->first();
+            if(!$cartItems){
+                return response()->json(['status' => false, 'message' => 'Sản phẩm không tồn tại trong giỏ hàng.']);
+            }
+            $product = Product::find($productId);
+            if($quantity > $product->stock){
+                return response()->json(['status' => false, 'message' => 'Số lượng vượt quá tồn kho.']);
+            }
+
+            $cartItems->quantity = $quantity;
+            $cartItems->save();
+        } else {
+            $cart = session()->get('cart', []);
+
+            if(!isset($cart[$productId])){
+                return response()->json(['status' => false, 'message' => 'Sản phẩm không tồn tại trong giỏ hàng.']);
+            }
+            $product = Product::find($productId);
+            if($quantity > $product->stock){
+                return response()->json(['status' => false, 'message' => 'Số lượng vượt quá tồn kho.']);
+            }
+
+            $cart[$productId]['quantity'] = $quantity;
+            session()->put('cart', $cart);
+        }
+        // Calculate cartTotal again
+        $subtotal = $quantity * $product->price;
+        $total = $this->calculateCartTotal();
+        $grandTotal = $total + 25000; // Add tax or other fees if needed
+        return response()->json([
+            'quantity' => $quantity,
+            'subtotal' => number_format($subtotal, 0, ',', '.'),
+            'total' => number_format($total, 0, ',', '.'),
+            'grandTotal' => number_format($grandTotal, 0, ',', '.')
+        ]);
+    }
+
+    //Handle removeCartItem
+        function removeCartItem(Request $request){
+        $productId = $request->product_id;
+        
+        if(Auth::check()){
+            CartItem::where('user_id', Auth::id())->where('product_id', $productId)->delete();
+            
+        } else {
+            $cart = session()->get('cart', []);
+
+            unset($cart[$productId]);
+            session()->put('cart', $cart);
+        }
+
+        $total = $this->calculateCartTotal();
+        $grandTotal = $total + 25000;
+        return response()->json([
+            'total' => number_format($total, 0, ',', '.'),
+            'grandTotal' => number_format($grandTotal, 0, ',', '.')
+        ]);
+    }
+
+    function calculateCartTotal()
+    {
+        if(Auth::check()){
+            return CartItem::where('user_id', Auth::id())->with('product')->get()->sum(fn($item) => $item->quantity * $item->product->price);
+           
+        } else {
+            $cart = session()->get('cart', []);
+            return collect($cart)->sum(fn($item) => $item['quantity'] * $item['price']);
+        }
     }
 }

@@ -37,6 +37,6 @@
     </div>
     <div class="btn-wrapper">
         <a href="{{ route('cart.index') }}" class="theme-btn-1 btn btn-effect-1">Xem giỏ hàng</a>
-        <a href="cart.html" class="theme-btn-2 btn btn-effect-2">Thanh toán</a>
+        <a href="{{ route('cart.index') }}" class="theme-btn-2 btn btn-effect-2">Thanh toán</a>
     </div>
 </div>

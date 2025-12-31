@@ -254,8 +254,8 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="javascript:void(0)" title="Thêm vào giỏ" data-bs-toggle="modal"
-                                        data-bs-target="#add_to_cart_modal-{{ $product->id }}">
+                                    <a href="javascript:void(0)" title="Thêm vào giỏ" class="add-to-cart-btn"
+                                        data-id="{{ $product->id }}">
                                         <i class="fas fa-shopping-cart"></i>
                                     </a>
                                 </li>

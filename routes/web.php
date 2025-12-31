@@ -9,6 +9,7 @@ use App\Http\Controllers\Clients\ResetPasswordController;
 use App\Http\Controllers\Clients\HomeController;
 use App\Http\Controllers\Clients\ProductController;
 use App\Http\Controllers\Clients\SearchController;
+use App\Http\Controllers\AIChatController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -74,13 +75,16 @@ Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add')
 Route::post('/cart/remove', [CartController::class, 'removeFromMiniCart'])->name('cart.remove');
 Route::get('/mini-cart', [CartController::class, 'loadMiniCart'])->name('cart.mini');
 
-Route::get('/carts', [CartController::class, 'viewCart'])->name('cart.index');
-
-
-
+Route::get('/cart', [CartController::class, 'viewCart'])->name('cart.index');
+Route::post('/cart/update', [CartController::class, 'updateCart'])->name('cart.update');
+Route::post('/cart/remove-cart', [CartController::class, 'removeCartItem'])->name('cart.remove');
 
 
 //search
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+
+
+Route::post('/ai/chat', [AIChatController::class, 'chat'])->name('ai.chat');
 
 require __DIR__.'/admin.php';

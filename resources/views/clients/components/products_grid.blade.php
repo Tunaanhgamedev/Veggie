@@ -17,8 +17,8 @@
                             </li>
                             <li>
                                 <a href="javascript:void(0)" title="Thêm vào giỏ" class="add-to-cart-btn"
-                                    data-product-id="{{ $product->id }}">
-                                    <i class=" fas fa-shopping-cart"></i>
+                                    data-id="{{ $product->id }}">
+                                    <i class="fas fa-shopping-cart"></i>
                                 </a>
                             </li>
                             <li>

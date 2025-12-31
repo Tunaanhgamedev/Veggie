@@ -51,34 +51,34 @@
                                                 <table class="table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Order</th>
-                                                            <th>Date</th>
-                                                            <th>Status</th>
-                                                            <th>Total</th>
-                                                            <th>Action</th>
+                                                            <th>Đơn hàng</th>
+                                                            <th>Ngày</th>
+                                                            <th>Trạng thái</th>
+                                                            <th>Tổng</th>
+                                                            <th>Hành động</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <tr>
                                                             <td>1</td>
-                                                            <td>Jun 22, 2019</td>
-                                                            <td>Pending</td>
-                                                            <td>$3000</td>
-                                                            <td><a href="cart.html">View</a></td>
+                                                            <td>22 Tháng 6, 2025</td>
+                                                            <td>Đang chờ</td>
+                                                            <td>400000VNĐ</td>
+                                                            <td><a href="{{ route('cart.index') }}">Xem</a></td>
                                                         </tr>
                                                         <tr>
                                                             <td>2</td>
-                                                            <td>Nov 22, 2019</td>
-                                                            <td>Approved</td>
-                                                            <td>$200</td>
-                                                            <td><a href="cart.html">View</a></td>
+                                                            <td>22 Tháng 11, 2025</td>
+                                                            <td>Đã duyệt</td>
+                                                            <td>100000VNĐ</td>
+                                                            <td><a href="{{ route('cart.index') }}">Xem</a></td>
                                                         </tr>
                                                         <tr>
                                                             <td>3</td>
-                                                            <td>Jan 12, 2020</td>
-                                                            <td>On Hold</td>
-                                                            <td>$990</td>
-                                                            <td><a href="cart.html">View</a></td>
+                                                            <td>12 Tháng 1, 2025</td>
+                                                            <td>Tạm giữ</td>
+                                                            <td>990000VNĐ</td>
+                                                            <td><a href="{{ route('cart.index') }}">Xem</a></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

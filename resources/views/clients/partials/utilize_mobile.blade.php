@@ -48,7 +48,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="cart.html" title="Giỏ hàng">
+                    <a href="{{ route('cart.index') }}" title="Giỏ hàng">
                         <span class="utilize-btn-icon">
                             <i class="fas fa-shopping-cart"></i>
                             <sup>5</sup>
